@@ -13,7 +13,7 @@
     stage('Test') {
       steps {
         script {
-          sh 'echo "Testing Stage"'
+          sh 'echo "Testing 1 Stage"'
         }
       }
     }
