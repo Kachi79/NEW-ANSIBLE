@@ -2,4 +2,4 @@
 Devops: The new world order!
 inventory of tools needed.
 Inventing new tools for automation...
-The world as seen by Devops Engineers!
+Re-inventing the the world of IT!
