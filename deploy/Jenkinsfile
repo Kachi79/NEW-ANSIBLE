@@ -1,6 +1,9 @@
 pipeline {
-    agent any
+  agent any
 
+  environment  {
+      ANSIBLE_CONFIG="${WORKSPACE}/deploy/ansible.cfg"
+    }
   stages {
     stage('Initial cleanup') {
       steps {
@@ -9,38 +12,23 @@ pipeline {
         }
       }
     }
-    stage('Build') {
-      steps {
-        script {
-          sh 'echo "Building Stage"'
-        }
-      }
-    }
-    stage('Test') {
-      steps {
-        script {
-          sh 'echo "Testing Stage"'
-        }
-      }
-    }
-     stage('Package') {
+    stage('Checkout SCM') {
        steps {
-         script{
-          sh 'echo "Packaging Stage"'
-        }
-      }
-    }
-     stage('Deploy') {
-      steps {
-        script {
-          sh 'echo "Deploying to Dev"'
-        }
-      }
-    }
-    stage("Clean Up") {
-      steps {
-        cleanWs()
-        }
-    }
-  }
-}
+            git branch: 'main', url: 'https://github.com/Kachi79/NEW-ANSIBLE.git'
+         }
+       }
+    stage('prepare Ansible for Execution') {
+       steps {
+             sh 'echo ${WORKSPACE}'
+             sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg'
+         }
+       }
+    stage('Run Ansible playbook') {
+       steps {
+        ansiblePlaybook colorized: true, credentialsId: 'private-key', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'   
+         }
+       }
+    stage('Clean workspace after build'){
+       steps{
+        cleanWs(cleanwhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
+       }  
