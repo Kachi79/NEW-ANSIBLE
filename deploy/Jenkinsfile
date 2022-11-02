@@ -5,17 +5,9 @@
     stage('Build') {
       steps {
         script {
-          sh 'echo "Building Stage"'
+          sh 'echo "New Building Stage"'
         }
       }
     }
 
-    stage('Test') {
-      steps {
-        script {
-          sh 'echo "Testing Stage"'
-        }
-      }
-    }
-    }
-}
+  
