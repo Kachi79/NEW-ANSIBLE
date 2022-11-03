@@ -35,7 +35,7 @@ pipeline {
        }
     stage('Clean workspace after build'){
        steps{
-        cleanWs(cleanwhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
+        cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
        }
     }
   }     
