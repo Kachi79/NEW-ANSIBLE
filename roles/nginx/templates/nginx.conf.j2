@@ -1,81 +1,52 @@
-user  {{ nginx_user }};
+#{{ ansible_managed }}
+user              {{ nginx_user }}  {{ nginx_group }};
 
-error_log  {{ nginx_error_log }};
-pid        {{ nginx_pidfile }};
-
-{% block worker %}
 worker_processes  {{ nginx_worker_processes }};
-{% endblock %}
 
-{% if nginx_extra_conf_options %}
-{{ nginx_extra_conf_options }}
+{% if nginx_pid_file %}
+pid        {{ nginx_pid_file }};
 {% endif %}
 
-{% block events %}
+worker_rlimit_nofile {{ nginx_worker_rlimit_nofile }};
+
+include {{ nginx_conf_dir }}/modules-enabled/*.conf;
+
+{% if nginx_extra_root_params is defined and nginx_extra_root_params is iterable %}
+{% for line in nginx_extra_root_params %}
+{{ line }};
+{% endfor %}
+{% endif %}
+
 events {
-    worker_connections  {{ nginx_worker_connections }};
-    multi_accept {{ nginx_multi_accept }};
+{% for v in nginx_events_params %}
+        {{ v }};
+{% endfor %}
 }
-{% endblock %}
+
 
 http {
-    {% block http_begin %}{% endblock %}
 
-{% block http_basic %}
-    include       {{ nginx_mime_file_path }};
-    default_type  application/octet-stream;
-
-    server_names_hash_bucket_size {{ nginx_server_names_hash_bucket_size }};
-
-    client_max_body_size {{ nginx_client_max_body_size }};
-
-    log_format  main  {{ nginx_log_format|indent(23) }};
-
-    access_log  {{ nginx_access_log }};
-
-    sendfile        {{ nginx_sendfile }};
-    tcp_nopush      {{ nginx_tcp_nopush }};
-    tcp_nodelay     {{ nginx_tcp_nodelay }};
-
-    keepalive_timeout  {{ nginx_keepalive_timeout }};
-    keepalive_requests {{ nginx_keepalive_requests }};
-
-    server_tokens {{ nginx_server_tokens }};
-{% if nginx_proxy_cache_path %}
-    proxy_cache_path {{ nginx_proxy_cache_path }};
-{% endif %}
-{% endblock %}
-
-{% block http_gzip %}
-    # gzip on;
-{% endblock %}
-
-{% if nginx_extra_http_options %}
-    {{ nginx_extra_http_options|indent(4, False) }}
-{% endif %}
-
-{% block http_upstream %}
-{% for upstream in nginx_upstreams %}
-    upstream {{ upstream.name }} {
-{% if upstream.strategy is defined %}
-        {{ upstream.strategy }};
-{% endif %}
-{% for server in upstream.servers %}
-        server {{ server }};
+        include {{ nginx_conf_dir }}/mime.types;
+        default_type application/octet-stream;
+{% for v in nginx_http_params %}
+        {{ v if "}" in v[-2:] else v+";" }}
 {% endfor %}
-{% if upstream.keepalive is defined %}
-        keepalive {{ upstream.keepalive }};
-{% endif %}
-    }
-{% endfor %}
-{% endblock %}
 
-{% block http_includes %}
-    include {{ nginx_conf_path }}/*.conf;
-{% if nginx_conf_path != nginx_vhost_path %}
-    include {{ nginx_vhost_path }}/*;
-{% endif %}
-{% endblock %}
-
-    {% block http_end %}{% endblock %}
+        include {{ nginx_conf_dir }}/conf.d/*.conf;
+        include {{ nginx_conf_dir }}/sites-enabled/*;
 }
+
+{% if nginx_stream_params or nginx_stream_configs %}
+stream {
+
+{% for v in nginx_stream_params %}
+        {{ v }};
+{% endfor %}
+
+        include {{ nginx_conf_dir }}/conf.d/stream/*.conf;
+}
+{% endif %}
+
+{% if nginx_daemon_mode == "off" %}
+daemon off;
+{% endif %}

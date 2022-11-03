@@ -1,0 +1,54 @@
+---
+- name: Check if Amplify Agent is installed
+  become: yes
+  package:
+    name: nginx-amplify-agent
+    state: present
+  ignore_errors: true
+  register: amplify_agent_installed
+  tags: [packages]
+
+- name: Install Amplify Agent if not installed
+  block:
+    - name: Download Amplify Agent script
+      become: yes
+      get_url:
+        url: "{{ nginx_amplify_script_url }}"
+        dest: "{{ nginx_amplify_script_path }}"
+
+    - name: Run Amplify Agent install.sh script
+      become: yes
+      command: "sh /tmp/install-amplify-agent.sh -y"
+      environment:
+        API_KEY: "{{ nginx_amplify_api_key }}"
+      become_user: root
+      become_method: sudo
+
+    - name: Remove installation script
+      become: yes
+      file:
+        path: "{{ nginx_amplify_script_path }}"
+        state: absent
+
+  when: amplify_agent_installed.failed|bool
+  tags: [configuration, packages]
+
+- name: Update Amplify Agent if already installed and update flag is enabled
+  become: yes
+  package:
+    name: nginx-amplify-agent
+    state: latest
+  when:
+    - not amplify_agent_installed.failed|bool
+    - nginx_amplify_update_agent|bool
+  tags:
+    - packages
+    - skip_ansible_lint  # latest package version
+
+- name: Verify Amplify agent is up and running
+  become: yes
+  service:
+    name: amplify-agent
+    state: started
+    enabled: true
+  tags: [service]

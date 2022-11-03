@@ -1,48 +1,51 @@
 ---
-# Variable setup.
-- name: Include OS-specific variables.
-  include_vars: "{{ ansible_os_family }}.yml"
 
-- name: Define nginx_user.
-  set_fact:
-    nginx_user: "{{ __nginx_user }}"
-  when: nginx_user is not defined
+- name: include OS dependent vars
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "../vars/{{ ansible_os_family }}.yml"
+    - "../vars/empty.yml"
+  when: nginx_load_default_vars
+  tags: [always]
 
-# Setup/install tasks.
-- include_tasks: setup-RedHat.yml
-  when: ansible_os_family == 'RedHat' or ansible_os_family == 'Rocky'
+- include_tasks: selinux.yml
+  when: ansible_selinux and ansible_selinux.status == "enabled"
+  tags: [packages, selinux, nginx]
 
-- include_tasks: setup-Ubuntu.yml
-  when: ansible_distribution == 'Ubuntu'
+- include_tasks: nginx-official-repo.yml
+  when: nginx_official_repo|bool
+  tags: [packages, nginx]
 
-- include_tasks: setup-Debian.yml
-  when: ansible_os_family == 'Debian'
+- include_tasks: installation.packages.yml
+  when: nginx_installation_type == "packages" and nginx_install
+  tags: [packages, nginx]
 
-- include_tasks: setup-FreeBSD.yml
-  when: ansible_os_family == 'FreeBSD'
+- import_tasks: ensure-dirs.yml
+  tags: [configuration, nginx]
 
-- include_tasks: setup-OpenBSD.yml
-  when: ansible_os_family == 'OpenBSD'
+- include_tasks: remove-defaults.yml
+  when: not nginx_keep_only_specified
+  tags: [configuration, nginx]
 
-- include_tasks: setup-Archlinux.yml
-  when: ansible_os_family == 'Archlinux'
+- include_tasks: remove-extras.yml
+  when: nginx_keep_only_specified
+  tags: [configuration, nginx]
 
-# Vhost configuration.
-- import_tasks: vhosts.yml
+- import_tasks: remove-unwanted.yml
+  tags: [configuration, nginx]
 
-# Nginx setup.
-- name: Copy nginx configuration in place.
-  template:
-    src: "{{ nginx_conf_template }}"
-    dest: "{{ nginx_conf_file_path }}"
-    owner: root
-    group: "{{ root_group }}"
-    mode: 0644
-  notify:
-    - reload nginx
+- import_tasks: configuration.yml
+  tags: [configuration, nginx]
 
-- name: Ensure nginx service is running as configured.
-  service:
-    name: nginx
-    state: "{{ nginx_service_state }}"
-    enabled: "{{ nginx_service_enabled }}"
+- include_tasks: cloudflare_configuration.yml
+  when: nginx_set_real_ip_from_cloudflare|bool
+  tags: [configuration, nginx]
+
+- include_tasks: amplify.yml
+  when: nginx_amplify|bool and (ansible_distribution in ['RedHat', 'CentOS', 'Debian', 'Amazon', 'Ubuntu'])
+  tags: [amplify, nginx]
+
+- name: Start the nginx service
+  service: name={{ nginx_service_name }} state={{ nginx_start_service | ternary('started', 'stopped') }} enabled={{ nginx_start_at_boot }}
+  when: nginx_installation_type in nginx_installation_types_using_service and nginx_daemon_mode == "on"
+  tags: [service, nginx]

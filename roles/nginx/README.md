@@ -1,246 +1,405 @@
-# Ansible Role: Nginx
+# sbog/nginx
 
-[![CI](https://github.com/geerlingguy/ansible-role-nginx/workflows/CI/badge.svg?event=push)](https://github.com/geerlingguy/ansible-role-nginx/actions?query=workflow%3ACI)
+[![Build Status](https://travis-ci.com/sorrowless/ansible_nginx.svg?branch=master)](https://travis-ci.com/sorrowless/ansible_nginx)
+[![Ansible Role](https://img.shields.io/ansible/role/51617)](https://galaxy.ansible.com/sorrowless/nginx)
+[![Ansible Quality Score](https://img.shields.io/ansible/quality/51617)](https://galaxy.ansible.com/sorrowless/nginx)
+[![Ansible Role](https://img.shields.io/ansible/role/d/51617)](https://galaxy.ansible.com/sorrowless/nginx)
+[![GitHub](https://img.shields.io/github/license/sorrowless/ansible_nginx)](https://github.com/sorrowless/ansible_nginx/blob/master/LICENSE)
 
-**Note:** Please consider using the official [NGINX Ansible role](https://github.com/nginxinc/ansible-role-nginx) from NGINX, Inc.
-
-Installs Nginx on RedHat/CentOS, Debian/Ubuntu, Archlinux, FreeBSD or OpenBSD servers.
-
-This role installs and configures the latest version of Nginx from the Nginx yum repository (on RedHat-based systems), apt (on Debian-based systems), pacman (Archlinux), pkgng (on FreeBSD systems) or pkg_add (on OpenBSD systems). You will likely need to do extra setup work after this role has installed Nginx, like adding your own [virtualhost].conf file inside `/etc/nginx/conf.d/`, describing the location and options to use for your particular website.
+This role installs and configures the nginx web server. The user can specify
+any http configuration parameters they wish to apply their site. Any number of
+sites can be added with configurations of your choice.
 
 ## Requirements
 
-None.
+This role requires Ansible 2.4 or higher and platform requirements are listed
+in the metadata file. (Some older version of the role support Ansible 1.4)
+For FreeBSD a working pkgng setup is required (see: https://www.freebsd.org/doc/handbook/pkgng-intro.html )
+Installation of Nginx Amplify agent is only supported on CentOS, RedHat, Amazon, Debian and Ubuntu distributions.
+
+## Install
+
+```sh
+ansible-galaxy install sorrowless.nginx
+```
 
 ## Role Variables
 
-Available variables are listed below, along with default values (see `defaults/main.yml`):
-
-
-    nginx_listen_ipv6: true
-
-Whether or not to listen on IPv6 (applied to all vhosts managed by this role).
-
-    nginx_vhosts: []
-
-A list of vhost definitions (server blocks) for Nginx virtual hosts. Each entry will create a separate config file named by `server_name`. If left empty, you will need to supply your own virtual host configuration. See the commented example in `defaults/main.yml` for available server options. If you have a large number of customizations required for your server definition(s), you're likely better off managing the vhost configuration file yourself, leaving this variable set to `[]`.
-
-    nginx_vhosts:
-      - listen: "443 ssl http2"
-        server_name: "example.com"
-        server_name_redirect: "www.example.com"
-        root: "/var/www/example.com"
-        index: "index.php index.html index.htm"
-        error_page: ""
-        access_log: ""
-        error_log: ""
-        state: "present"
-        template: "{{ nginx_vhost_template }}"
-        filename: "example.com.conf"
-        extra_parameters: |
-          location ~ \.php$ {
-              fastcgi_split_path_info ^(.+\.php)(/.+)$;
-              fastcgi_pass unix:/var/run/php5-fpm.sock;
-              fastcgi_index index.php;
-              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-              include fastcgi_params;
-          }
-          ssl_certificate     /etc/ssl/certs/ssl-cert-snakeoil.pem;
-          ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
-          ssl_protocols       TLSv1.1 TLSv1.2;
-          ssl_ciphers         HIGH:!aNULL:!MD5;
-
-An example of a fully-populated nginx_vhosts entry, using a `|` to declare a block of syntax for the `extra_parameters`.
-
-Please take note of the indentation in the above block. The first line should be a normal 2-space indent. All other lines should be indented normally relative to that line. In the generated file, the entire block will be 4-space indented. This style will ensure the config file is indented correctly.
-
-      - listen: "80"
-        server_name: "example.com www.example.com"
-        return: "301 https://example.com$request_uri"
-        filename: "example.com.80.conf"
-
-An example of a secondary vhost which will redirect to the one shown above.
-
-*Note: The `filename` defaults to the first domain in `server_name`, if you have two vhosts with the same domain, eg. a redirect, you need to manually set the `filename` so the second one doesn't override the first one*
-
-    nginx_remove_default_vhost: false
-
-Whether to remove the 'default' virtualhost configuration supplied by Nginx. Useful if you want the base `/` URL to be directed at one of your own virtual hosts configured in a separate .conf file.
-
-    nginx_upstreams: []
-
-If you are configuring Nginx as a load balancer, you can define one or more upstream sets using this variable. In addition to defining at least one upstream, you would need to configure one of your server blocks to proxy requests through the defined upstream (e.g. `proxy_pass http://myapp1;`). See the commented example in `defaults/main.yml` for more information.
-
-    nginx_user: "nginx"
-
-The user under which Nginx will run. Defaults to `nginx` for RedHat, `www-data` for Debian and `www` on FreeBSD and OpenBSD.
-
-    nginx_worker_processes: "{{ ansible_processor_vcpus|default(ansible_processor_count) }}"
-    nginx_worker_connections: "1024"
-    nginx_multi_accept: "off"
-
-`nginx_worker_processes` should be set to the number of cores present on your machine (if the default is incorrect, find this number with `grep processor /proc/cpuinfo | wc -l`). `nginx_worker_connections` is the number of connections per process. Set this higher to handle more simultaneous connections (and remember that a connection will be used for as long as the keepalive timeout duration for every client!). You can set `nginx_multi_accept` to `on` if you want Nginx to accept all connections immediately.
-
-    nginx_error_log: "/var/log/nginx/error.log warn"
-    nginx_access_log: "/var/log/nginx/access.log main buffer=16k flush=2m"
-
-Configuration of the default error and access logs. Set to `off` to disable a log entirely.
-
-    nginx_sendfile: "on"
-    nginx_tcp_nopush: "on"
-    nginx_tcp_nodelay: "on"
-
-TCP connection options. See [this blog post](https://t37.net/nginx-optimization-understanding-sendfile-tcp_nodelay-and-tcp_nopush.html) for more information on these directives.
-
-    nginx_keepalive_timeout: "65"
-    nginx_keepalive_requests: "100"
-
-Nginx keepalive settings. Timeout should be set higher (10s+) if you have more polling-style traffic (AJAX-powered sites especially), or lower (<10s) if you have a site where most users visit a few pages and don't send any further requests.
-
-    nginx_server_tokens: "on"
-
-Nginx server_tokens settings. Controls whether nginx responds with it's version in HTTP headers. Set to `"off"` to disable.
-
-    nginx_client_max_body_size: "64m"
-
-This value determines the largest file upload possible, as uploads are passed through Nginx before hitting a backend like `php-fpm`. If you get an error like `client intended to send too large body`, it means this value is set too low.
-
-    nginx_server_names_hash_bucket_size: "64"
-
-If you have many server names, or have very long server names, you might get an Nginx error on startup requiring this value to be increased.
-
-    nginx_proxy_cache_path: ""
-
-Set as the `proxy_cache_path` directive in the `nginx.conf` file. By default, this will not be configured (if left as an empty string), but if you wish to use Nginx as a reverse proxy, you can set this to a valid value (e.g. `"/var/cache/nginx keys_zone=cache:32m"`) to use Nginx's cache (further proxy configuration can be done in individual server configurations).
-
-    nginx_extra_http_options: ""
-
-Extra lines to be inserted in the top-level `http` block in `nginx.conf`. The value should be defined literally (as you would insert it directly in the `nginx.conf`, adhering to the Nginx configuration syntax - such as `;` for line termination, etc.), for example:
-
-    nginx_extra_http_options: |
-      proxy_buffering    off;
-      proxy_set_header   X-Real-IP $remote_addr;
-      proxy_set_header   X-Scheme $scheme;
-      proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header   Host $http_host;
-
-See the template in `templates/nginx.conf.j2` for more details on the placement.
-
-    nginx_extra_conf_options: ""
-
-Extra lines to be inserted in the top of `nginx.conf`. The value should be defined literally (as you would insert it directly in the `nginx.conf`, adhering to the Nginx configuration syntax - such as `;` for line termination, etc.), for example:
-
-    nginx_extra_conf_options: |
-      worker_rlimit_nofile 8192;
-
-See the template in `templates/nginx.conf.j2` for more details on the placement.
-
-    nginx_log_format: |-
-      '$remote_addr - $remote_user [$time_local] "$request" '
-      '$status $body_bytes_sent "$http_referer" '
-      '"$http_user_agent" "$http_x_forwarded_for"'
-
-Configures Nginx's [`log_format`](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format). options.
-
-    nginx_default_release: ""
-
-(For Debian/Ubuntu only) Allows you to set a different repository for the installation of Nginx. As an example, if you are running Debian's wheezy release, and want to get a newer version of Nginx, you can install the `wheezy-backports` repository and set that value here, and Ansible will use that as the `-t` option while installing Nginx.
-
-    nginx_ppa_use: false
-    nginx_ppa_version: stable
-
-(For Ubuntu only) Allows you to use the official Nginx PPA instead of the system's package. You can set the version to `stable` or `development`.
-
-    nginx_yum_repo_enabled: true
-
-(For RedHat/CentOS only) Set this to `false` to disable the installation of the `nginx` yum repository. This could be necessary if you want the default OS stable packages, or if you use Satellite.
-
-    nginx_service_state: started
-    nginx_service_enabled: yes
-
-By default, this role will ensure Nginx is running and enabled at boot after Nginx is configured. You can use these variables to override this behavior if installing in a container or further control over the service state is required.
-
-## Overriding configuration templates
-
-If you can't customize via variables because an option isn't exposed, you can override the template used to generate the virtualhost configuration files or the `nginx.conf` file.
+The variables that can be passed to this role and a brief description about
+them are as follows. (For all variables, take a look at [defaults/main.yml](defaults/main.yml))
 
 ```yaml
-nginx_conf_template: "nginx.conf.j2"
-nginx_vhost_template: "vhost.j2"
+# The user to run nginx
+nginx_user: "www-data"
+
+# A list of directives for the events section.
+nginx_events_params:
+ - worker_connections 512
+ - debug_connection 127.0.0.1
+ - use epoll
+ - multi_accept on
+
+# A list of hashes that define the servers for nginx,
+# as with http parameters. Any valid server parameters
+# can be defined here.
+nginx_sites:
+ default:
+     - listen 80
+     - server_name _
+     - root "/usr/share/nginx/html"
+     - index index.html
+ foo:
+     - listen 8080
+     - server_name localhost
+     - root "/tmp/site1"
+     - location / { try_files $uri $uri/ /index.html; }
+     - location /images/ { try_files $uri $uri/ /index.html; }
+ bar:
+     - listen 9090
+     - server_name ansible
+     - root "/tmp/site2"
+     - location / { try_files $uri $uri/ /index.html; }
+     - location /images/ {
+         try_files $uri $uri/ /index.html;
+         allow 127.0.0.1;
+         deny all;
+       }
+
+# A list of hashes that define additional configuration
+nginx_configs:
+  proxy:
+      - proxy_set_header X-Real-IP  $remote_addr
+      - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
+  upstream:
+      - upstream foo { server 127.0.0.1:8080 weight=10; }
+  geo:
+      - geo $local {
+          default 0;
+          127.0.0.1 1;
+        }
+  gzip:
+      - gzip on
+      - gzip_disable msie6
+
+# A list of hashes that define configuration snippets
+nginx_snippets:
+  error_pages:
+    - error_page 500 /http_errors/500.html
+    - error_page 502 /http_errors/502.html
+    - error_page 503 /http_errors/503.html
+    - error_page 504 /http_errors/504.html
+
+# A list of hashes that define user/password files
+nginx_auth_basic_files:
+   demo:
+     - foo:$apr1$mEJqnFmy$zioG2q1iDWvRxbHuNepIh0 # foo:demo , generated by : htpasswd -nb foo demo
+     - bar:$apr1$H2GihkSo$PwBeV8cVWFFQlnAJtvVCQ. # bar:demo , generated by : htpasswd -nb bar demo
+
+# Enable Real IP for CloudFlare requests
+nginx_set_real_ip_from_cloudflare: True
+
+# Enable Nginx Amplify
+nginx_amplify: true
+nginx_amplify_api_key: "your_api_key_goes_here"
+nginx_amplify_update_agent: true
+
+# Define modules to enable in configuration
+#
+# Nginx installed via EPEL and APT repos will also install some modules automatically.
+# For official Nginx repo use you will need to install module packages manually.
+#
+# When using with EPEL and APT repos, specify this section as a list of configuration
+# file names, minus the .conf file name extension.
+
+# When using the official Nginx repo, specify this section as list of module file
+# names, minus the .so file name extension.
+#
+# Available module config files in EPEL and APT repos:
+# (APT actually has several more, see https://wiki.debian.org/Nginx/)
+# - mod-http-geoip
+# - mod-http-image-filter
+# - mod-http-perl
+# - mod-http-xslt-filter
+# - mod-mail
+# - mod-stream
+#
+# Available module filenames in Official NGINX repo:
+# - ngx_http_geoip_module
+# - ngx_http_image_filter_module
+# - ngx_http_perl_module
+# - ngx_http_xslt_filter_module
+# - ngx_http_js_module
+#
+# Custom compiled modules are ok too if the .so file exists in same location as a packaged module would be:
+# - ngx_http_modsecurity_module
+#
+nginx_module_configs:
+  - mod-http-geoip
 ```
 
-If necessary you can also set the template on a per vhost basis.
+# Examples
+
+## 1) Install nginx with HTTP directives of choice, but with no sites configured and no additional configuration:
 
 ```yaml
-nginx_vhosts:
-  - listen: "80 default_server"
-    server_name: "site1.example.com"
-    root: "/var/www/site1.example.com"
-    index: "index.php index.html index.htm"
-    template: "{{ playbook_dir }}/templates/site1.example.com.vhost.j2"
-  - server_name: "site2.example.com"
-    root: "/var/www/site2.example.com"
-    index: "index.php index.html index.htm"
-    template: "{{ playbook_dir }}/templates/site2.example.com.vhost.j2"
+- hosts: all
+  roles:
+  - {role: nginx,
+     nginx_http_params: ["sendfile on", "access_log /var/log/nginx/access.log"]
+                          }
 ```
 
-You can either copy and modify the provided template, or extend it with [Jinja2 template inheritance](http://jinja.pocoo.org/docs/2.9/templates/#template-inheritance) and override the specific template block you need to change.
-
-### Example: Configure gzip in nginx configuration
-
-Set the `nginx_conf_template` to point to a template file in your playbook directory.
+## 2) Install nginx with different HTTP directives than in the previous example, but no
+sites configured and no additional configuration.
 
 ```yaml
-nginx_conf_template: "{{ playbook_dir }}/templates/nginx.conf.j2"
+- hosts: all
+  roles:
+  - {role: nginx,
+     nginx_http_params: ["tcp_nodelay on", "error_log /var/log/nginx/error.log"]}
 ```
 
-Create the child template in the path you configured above and extend `geerlingguy.nginx` template file relative to your `playbook.yml`.
+Note: Please make sure the HTTP directives passed are valid, as this role
+won't check for the validity of the directives. See the nginx documentation
+for details.
 
+## 3) Install nginx and add a site to the configuration.
+
+```yaml
+- hosts: all
+
+  roles:
+  - role: nginx
+    nginx_http_params:
+      - sendfile "on"
+      - access_log "/var/log/nginx/access.log"
+    nginx_sites:
+      bar:
+        - listen 8080
+        - location / { try_files $uri $uri/ /index.html; }
+        - location /images/ { try_files $uri $uri/ /index.html; }
+    nginx_configs:
+      proxy:
+        - proxy_set_header X-Real-IP  $remote_addr
+        - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
 ```
-{% extends 'roles/geerlingguy.nginx/templates/nginx.conf.j2' %}
 
-{% block http_gzip %}
-    gzip on;
-    gzip_proxied any;
-    gzip_static on;
-    gzip_http_version 1.0;
-    gzip_disable "MSIE [1-6]\.";
-    gzip_vary on;
-    gzip_comp_level 6;
-    gzip_types
-        text/plain
-        text/css
-        text/xml
-        text/javascript
-        application/javascript
-        application/x-javascript
-        application/json
-        application/xml
-        application/xml+rss
-        application/xhtml+xml
-        application/x-font-ttf
-        application/x-font-opentype
-        image/svg+xml
-        image/x-icon;
-    gzip_buffers 16 8k;
-    gzip_min_length 512;
-{% endblock %}
+## 4) Install nginx and add extra variables to default config
+
+```yaml
+-hosts: all
+  vars:
+    - my_extra_params:
+      - client_max_body_size 200M
+# retain defaults and add additional `client_max_body_size` param
+  roles:
+    - role: sorrowless.nginx
+      nginx_http_params: "{{ nginx_http_default_params + my_extra_params }}"
+```
+
+Note: Each site added is represented by a list of hashes, and the configurations
+generated are populated in /etc/nginx/site-available/ and linked from /etc/nginx/site-enable/ to /etc/nginx/site-available.
+
+The file name for the specific site configuration is specified in the hash
+with the key "file_name", any valid server directives can be added to the hash.
+Additional configurations are created in /etc/nginx/conf.d/
+
+## 5) Install Nginx, add 2 sites (different method) and add additional configuration
+
+```yaml
+---
+- hosts: all
+  roles:
+    - role: nginx
+      nginx_http_params:
+        - sendfile on
+        - access_log /var/log/nginx/access.log
+      nginx_sites:
+         foo:
+           - listen 8080
+           - server_name localhost
+           - root /tmp/site1
+           - location / { try_files $uri $uri/ /index.html; }
+           - location /images/ { try_files $uri $uri/ /index.html; }
+         bar:
+           - listen 9090
+           - server_name ansible
+           - root /tmp/site2
+           - location / { try_files $uri $uri/ /index.html; }
+           - location /images/ { try_files $uri $uri/ /index.html; }
+      nginx_configs:
+         proxy:
+            - proxy_set_header X-Real-IP  $remote_addr
+            - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
+```
+
+## 6) Install Nginx, add 2 sites, add additional configuration and an upstream configuration block
+
+```yaml
+---
+- hosts: all
+  roles:
+    - role: nginx
+      nginx_error_log_level: info
+      nginx_http_params:
+        - sendfile on
+        - access_log /var/log/nginx/access.log
+      nginx_sites:
+        foo:
+           - listen 8080
+           - server_name localhost
+           - root /tmp/site1
+           - location / { try_files $uri $uri/ /index.html; }
+           - location /images/ { try_files $uri $uri/ /index.html; }
+        bar:
+           - listen 9090
+           - server_name ansible
+           - root /tmp/site2
+           - if ( $host = example.com ) { rewrite ^(.*)$ http://www.example.com$1 permanent; }
+           - location / {
+             try_files $uri $uri/ /index.html;
+             auth_basic            "Restricted";
+             auth_basic_user_file  auth_basic/demo;
+           }
+           - location /images/ { try_files $uri $uri/ /index.html; }
+      nginx_configs:
+        proxy:
+            - proxy_set_header X-Real-IP  $remote_addr
+            - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
+        upstream:
+            # Results in:
+            # upstream foo_backend {
+            #   server 127.0.0.1:8080 weight=10;
+            # }
+            - upstream foo_backend { server 127.0.0.1:8080 weight=10; }
+      nginx_auth_basic_files:
+        demo:
+           - foo:$apr1$mEJqnFmy$zioG2q1iDWvRxbHuNepIh0 # foo:demo , generated by : htpasswd -nb foo demo
+           - bar:$apr1$H2GihkSo$PwBeV8cVWFFQlnAJtvVCQ. # bar:demo , generated by : htpasswd -nb bar demo
+```
+
+## 7) Install Nginx, add a site and use special yaml syntax to make the location blocks multiline for clarity
+
+```yaml
+---
+- hosts: all
+  roles:
+    - role: nginx
+      nginx_http_params:
+        - sendfile on
+        - access_log /var/log/nginx/access.log
+      nginx_sites:
+        foo:
+           - listen 443 ssl
+           - server_name foo.example.com
+           - set $myhost foo.example.com
+           - |
+             location / {
+               proxy_set_header Host foo.example.com;
+             }
+           - |
+             location ~ /v2/users/.+?/organizations {
+               if ($request_method = PUT) {
+                 set $myhost bar.example.com;
+               }
+               if ($request_method = DELETE) {
+                 set $myhost bar.example.com;
+               }
+               proxy_set_header Host $myhost;
+             }
+```
+## 8) Example to use this role with my ssl-certs role to generate or copy ssl certificate ( https://galaxy.ansible.com/sorrowless/ssl-certs )
+```yaml
+ - hosts: all
+   roles:
+     - jdauphant.ssl-certs
+     - role: sorrowless.nginx
+       nginx_configs:
+          ssl:
+               - ssl_certificate_key {{ssl_certs_privkey_path}}
+               - ssl_certificate     {{ssl_certs_cert_path}}
+       nginx_sites:
+          default:
+               - listen 443 ssl
+               - server_name _
+               - root "/usr/share/nginx/html"
+               - index index.html
+```
+## 9) Site configuration using a custom template.
+Instead of defining a site config file using a list of attributes,
+you may use a hash/dictionary that includes the filename of an alternate template.
+Additional values are accessible within the template via the `item.value` variable.
+```yaml
+- hosts: all
+
+  roles:
+  - role: nginx
+    nginx_sites:
+      custom_bar:
+        template: custom_bar.conf.j2
+        server_name: custom_bar.example.com
+```
+Custom template: custom_bar.conf.j2:
+```handlebars
+# {{ ansible_managed }}
+upstream backend {
+  server 10.0.0.101;
+}
+server {
+  server_name {{ item.value.server_name }};
+  location / {
+    proxy_pass http://backend;
+  }
+}
+```
+Using a custom template allows for unlimited flexibility in configuring the site config file.
+This example demonstrates the common practice of configuring a site server block
+in the same file as its complementary upstream block.
+If you use this option:
+* _The hash **must** include a `template:` value, or the configuration task will fail._
+* _This role cannot check tha validity of your custom template.
+If you use this method, the conf file formatting provided by this role is unavailable,
+and it is up to you to provide a template with valid content and formatting for NGINX._
+
+## 10) Install Nginx, add 2 sites, use snippets to configure access controls
+```yaml
+---
+- hosts: all
+  roles:
+    - role: nginx
+      nginx_http_params:
+        - sendfile on
+        - access_log /var/log/nginx/access.log
+      nginx_snippets:
+        accesslist_devel:
+          - allow 192.168.0.0/24
+          - deny all
+      nginx_sites:
+        foo:
+           - listen 8080
+           - server_name localhost
+           - root /tmp/site1
+           - include snippets/accesslist_devel.conf
+           - location / { try_files $uri $uri/ /index.html; }
+           - location /images/ { try_files $uri $uri/ /index.html; }
+        bar:
+           - listen 9090
+           - server_name ansible
+           - root /tmp/site2
+           - location / { try_files $uri $uri/ /index.html; }
+           - location /images/ { try_files $uri $uri/ /index.html; }
 ```
 
 ## Dependencies
 
-None.
-
-## Example Playbook
-
-    - hosts: server
-      roles:
-        - { role: geerlingguy.nginx }
+None
 
 ## License
 
-MIT / BSD
+BSD
 
 ## Author Information
 
-This role was created in 2014 by [Jeff Geerling](https://www.jeffgeerling.com/), author of [Ansible for DevOps](https://www.ansiblefordevops.com/).
+- Original : Benno Joy
+- Modified by : DAUPHANT Julien
+- Reworked by : [Stan Bogatkin](https://sbog.ru)
