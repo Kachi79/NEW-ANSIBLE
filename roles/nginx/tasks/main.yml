@@ -72,7 +72,7 @@
         - nginx_service_modify | bool
       tags: nginx_modify_systemd
 
-    - name: Trigger handlers if necessary
+    - name: Trigger_handlers_if_necessary
       ansible.builtin.meta: flush_handlers
 
     - name: Debug NGINX output
