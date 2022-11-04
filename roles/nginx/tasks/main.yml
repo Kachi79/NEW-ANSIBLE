@@ -72,27 +72,27 @@
         - nginx_service_modify | bool
       tags: nginx_modify_systemd
 
-- name: Trigger handlers if necessary
-  ansible.builtin.meta: flush_handlers
+    - name: Trigger handlers if necessary
+      ansible.builtin.meta: flush_handlers
 
-- name: Debug NGINX output
-  ansible.builtin.include_tasks: "{{ role_path }}/tasks/config/debug-output.yml"
-  when:
-    - nginx_debug_output | bool
-    - nginx_state != "absent"
-  tags: nginx_debug_output
+    - name: Debug NGINX output
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/config/debug-output.yml"
+      when:
+        - nginx_debug_output | bool
+        - nginx_state != "absent"
+      tags: nginx_debug_output
 
-- name: Configure logrotate for NGINX
-  ansible.builtin.include_tasks: "{{ role_path }}/tasks/config/setup-logrotate.yml"
-  when:
-    - nginx_logrotate_conf_enable | bool
-    - nginx_state != "absent"
-  tags: nginx_logrotate_config
+    - name: Configure logrotate for NGINX
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/config/setup-logrotate.yml"
+      when:
+        - nginx_logrotate_conf_enable | bool
+        - nginx_state != "absent"
+      tags: nginx_logrotate_config
 
-- name: Install NGINX Amplify
-  ansible.builtin.include_tasks: "{{ role_path }}/tasks/amplify/install-amplify.yml"
-  when:
-    - nginx_amplify_enable | bool
-    - nginx_amplify_api_key is defined
-    - nginx_amplify_api_key | length > 0
-  tags: nginx_install_amplify
+    - name: Install NGINX Amplify
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/amplify/install-amplify.yml"
+      when:
+        - nginx_amplify_enable | bool
+        - nginx_amplify_api_key is defined
+        - nginx_amplify_api_key | length > 0
+      tags: nginx_install_amplify
