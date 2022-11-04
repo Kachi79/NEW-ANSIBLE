@@ -1,38 +1,55 @@
 ---
 galaxy_info:
-  author: Stan Bogatkin
-  description: Ansible role to install Nginx.
-  company: Personal project
-  license: BSD
-  min_ansible_version: 2.4
+  author: nginxinc
+  description: Official Ansible role for NGINX
   role_name: nginx
+  company: F5, Inc.
+
+  license: Apache License, Version 2.0
+
+  min_ansible_version: "2.12"
+
   platforms:
-    - name: EL
+    - name: Alpine
       versions:
         - all
-    - name: Fedora
-      versions:
-        - all
-    - name: opensuse
-      versions:
-        - all
-    - name: Ubuntu
+    - name: Amazon Linux 2
       versions:
         - all
     - name: Debian
       versions:
-        - all
+        - buster
+        - bullseye
+    - name: EL
+      versions:
+        - "7"
+        - "8"
+        - "9"
     - name: FreeBSD
       versions:
-        - 10.0
-        - 10.1
-        - 10.2
-        - 10.3
-        - 11.0
-        - 11.1
-    - name: SmartOS
+        - "12.1"
+    - name: Ubuntu
+      versions:
+        - bionic
+        - focal
+        - impish
+        - jammy
+    - name: SLES
+      versions:
+        - "12"
+        - "15"
+
   galaxy_tags:
-    - web
     - nginx
-allow_duplicates: yes
-dependencies: []
+    - oss
+    - opensource
+    - plus
+    - web
+    - server
+    - development
+    - install
+
+collections:
+  - ansible.posix
+  - community.crypto
+  - community.general

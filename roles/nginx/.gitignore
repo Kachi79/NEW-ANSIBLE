@@ -1,3 +1,25 @@
-/.idea
-### Vagrant ###
-.vagrant/
+# Any private crt and keys #
+############################
+*.crt
+*.key
+*~
+\#*
+
+# OS Specific #
+###############
+Thumbs.db
+.DS_Store
+.vscode
+
+# Ansible specific #
+####################
+.cache
+*.retry
+
+# Python specific #
+###################
+__pycache__
+
+# Logs #
+########
+*.log

@@ -1,39 +1,45 @@
 ---
+- name: (Handler) Systemd daemon-reload
+  ansible.builtin.systemd:
+    daemon_reload: true
 
-- name: restart nginx
-  become: yes
-  debug: msg="checking config first"
-  changed_when: True
-  notify:
-    - check nginx configuration
-    - restart nginx - after config check
+- name: (Handler) Start/reload NGINX
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
+    enabled: true
+  when:
+    - nginx_start | bool
+    - nginx_state != "absent"
+    - not ansible_check_mode | bool
+  listen: (Handler) Run NGINX
 
-- name: reload nginx
-  become: yes
-  debug: msg="checking config first"
-  changed_when: True
-  notify:
-    - check nginx configuration
-    - reload nginx - after config check
+- name: (Handler) Check NGINX
+  ansible.builtin.command: nginx -t
+  args:
+    chdir: "{{ ((ansible_facts['system'] | lower is not search('bsd')) | ternary('/etc/nginx', '/usr/local/sbin')) }}"
+  register: config_check
+  ignore_errors: true
+  check_mode: false
+  changed_when: false
+  when: nginx_state != "absent"
+  listen: (Handler) Run NGINX
 
-- name: check nginx configuration
-  become: yes
-  command: "{{ nginx_binary_name }} -t -c {{ nginx_conf_dir }}/nginx.conf"
-  register: result
-  changed_when: "result.rc != 0"
-  check_mode: no
-  when: nginx_installation_type in nginx_installation_types_using_service
+- name: (Handler) Print NGINX error if syntax check fails
+  ansible.builtin.debug:
+    var: config_check.stderr_lines
+  failed_when: config_check.rc != 0
+  when:
+    - config_check.stderr_lines is defined
+    - config_check.stderr_lines != []
+    - config_check.rc != 0
+    - nginx_state != "absent"
+  listen: (Handler) Run NGINX
 
-- name: restart nginx - after config check
-  become: yes
-  service: name={{ nginx_service_name }} state=restarted
-  when: nginx_installation_type in nginx_installation_types_using_service
-        and nginx_daemon_mode == "on"
-        and nginx_start_service
+- name: (Handler) Start NGINX Amplify agent
+  ansible.builtin.service:
+    name: amplify-agent
+    state: started
 
-- name: reload nginx - after config check
-  become: yes
-  service: name={{ nginx_service_name }} state=reloaded
-  when: nginx_installation_type in nginx_installation_types_using_service
-        and nginx_daemon_mode == "on"
-        and nginx_start_service
+- name: (Handler) Run logrotate
+  ansible.builtin.command: logrotate -f /etc/logrotate.d/nginx

@@ -1,405 +1,213 @@
-# sbog/nginx
+[![Ansible Galaxy](https://img.shields.io/badge/galaxy-nginxinc.nginx-5bbdbf.svg)](https://galaxy.ansible.com/nginxinc/nginx)
+[![Molecule CI/CD](https://github.com/nginxinc/ansible-role-nginx/workflows/Molecule%20CI/CD/badge.svg)](https://github.com/nginxinc/ansible-role-nginx/actions)
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-[![Build Status](https://travis-ci.com/sorrowless/ansible_nginx.svg?branch=master)](https://travis-ci.com/sorrowless/ansible_nginx)
-[![Ansible Role](https://img.shields.io/ansible/role/51617)](https://galaxy.ansible.com/sorrowless/nginx)
-[![Ansible Quality Score](https://img.shields.io/ansible/quality/51617)](https://galaxy.ansible.com/sorrowless/nginx)
-[![Ansible Role](https://img.shields.io/ansible/role/d/51617)](https://galaxy.ansible.com/sorrowless/nginx)
-[![GitHub](https://img.shields.io/github/license/sorrowless/ansible_nginx)](https://github.com/sorrowless/ansible_nginx/blob/master/LICENSE)
+# 👾 *Help make the NGINX Ansible role better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUKLQ7uTJaE1PitM_37KR881UM0NCWkY5UlE5MUYyWU1aTUcxV0NRUllJSC4u)!* 👾
 
-This role installs and configures the nginx web server. The user can specify
-any http configuration parameters they wish to apply their site. Any number of
-sites can be added with configurations of your choice.
+# Ansible NGINX Role
+
+This role installs NGINX Open Source, NGINX Plus, or the NGINX Amplify agent on your target host.
+
+**Note:** This role is still in active development. There may be unidentified issues and the role variables may change as development continues.
 
 ## Requirements
 
-This role requires Ansible 2.4 or higher and platform requirements are listed
-in the metadata file. (Some older version of the role support Ansible 1.4)
-For FreeBSD a working pkgng setup is required (see: https://www.freebsd.org/doc/handbook/pkgng-intro.html )
-Installation of Nginx Amplify agent is only supported on CentOS, RedHat, Amazon, Debian and Ubuntu distributions.
+### NGINX Plus (Optional)
 
-## Install
+If you wish to install NGINX Plus using this role, you will need to obtain an NGINX Plus license beforehand. *You do not need to do anything beforehand if you want to install NGINX OSS.*
 
-```sh
-ansible-galaxy install sorrowless.nginx
+### Ansible
+
+* This role is developed and tested with [maintained](https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html) versions of Ansible core (above `2.12`).
+* When using Ansible core, you will also need to install the following collections:
+
+    ```yaml
+    ---
+    collections:
+      - name: ansible.posix
+        version: 1.4.0
+      - name: community.general
+        version: 5.5.0
+      - name: community.crypto # Only required if you plan to install NGINX Plus
+        version: 2.5.0
+      - name: community.docker # Only required if you plan to use Molecule (see below)
+        version: 3.1.0
+    ```
+
+    **Note:** You can alternatively install the Ansible community distribution (what is known as the "old" Ansible) if you don't want to manage individual collections.
+* You will need to run this role as a root user using Ansible's `become` parameter. Make sure you have set up the appropriate permissions on your target hosts.
+* Instructions on how to install Ansible can be found in the [Ansible website](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#upgrading-ansible-from-version-2-9-and-older-to-version-2-10-or-later).
+
+### Jinja2
+
+* This role uses Jinja2 templates. Ansible core installs Jinja2 by default, but depending on your install and/or upgrade path, you might be running an outdated version of Jinja2. The minimum version of Jinja2 required for the role to properly function is `2.11`.
+* Instructions on how to install Jinja2 can be found in the [Jinja2 website](https://jinja.palletsprojects.com/en/2.11.x/intro/#installation).
+
+### Molecule (Optional)
+
+* Molecule is used to test the various functionalities of the role. The recommended version of Molecule to test this role is `3.3`.
+* Instructions on how to install Molecule can be found in the [Molecule website](https://molecule.readthedocs.io/en/latest/installation.html). *You will also need to install the Molecule Docker driver.*
+* To run the NGINX Plus Molecule tests, you must copy your NGINX Plus license to the role's [`files/license`](https://github.com/nginxinc/ansible-role-nginx/blob/main/files/license/) folder.
+
+You can alternatively add your NGINX Plus repository certificate and key to the local environment. Run the following commands to export these files as base64-encoded variables and execute the Molecule tests:
+
+```bash
+export NGINX_CRT=$( cat <path to your certificate file> | base64 )
+export NGINX_KEY=$( cat <path to your key file> | base64 )
+molecule test -s plus
 ```
+
+## Installation
+
+### Ansible Galaxy
+
+Use `ansible-galaxy install nginxinc.nginx` to install the latest stable release of the role on your system. Alternatively, if you have already installed the role, use `ansible-galaxy install -f nginxinc.nginx` to update the role to the latest release.
+
+### Git
+
+Use `git clone https://github.com/nginxinc/ansible-role-nginx.git` to pull the latest edge commit of the role from GitHub.
+
+## Platforms
+
+The NGINX Ansible role supports all platforms supported by [NGINX Open Source](https://nginx.org/en/linux_packages.html), [NGINX Plus](https://docs.nginx.com/nginx/technical-specs/), and the [NGINX Amplify agent](https://github.com/nginxinc/nginx-amplify-doc/blob/master/amplify-faq.md#21-what-operating-systems-are-supported):
+
+### NGINX Open Source
+
+```yaml
+Alpine:
+  - 3.13
+  - 3.14
+  - 3.15
+  - 3.16
+Amazon Linux:
+  - 2
+CentOS:
+  - 7.4+
+Debian:
+  - buster (10)
+  - bullseye (11)
+Red Hat:
+  - 7.4+
+  - 8
+  - 9
+SUSE/SLES:
+  - 12
+  - 15
+Ubuntu:
+  - bionic (18.04)
+  - focal (20.04)
+  - impish (21.10)
+  - jammy (22.04)
+```
+
+### NGINX Plus
+
+```yaml
+Alpine:
+  - 3.13
+  - 3.14
+  - 3.15
+  - 3.16
+Amazon Linux 2:
+  - any
+CentOS:
+  - 7.4+
+Debian:
+  - buster (10)
+  - bullseye (11)
+FreeBSD:
+  - 12.1+
+  - 13
+Oracle Linux:
+  - 7.4+
+Red Hat:
+  - 7.4+
+  - 8
+  - 9
+SUSE/SLES:
+  - 12
+  - 15
+Ubuntu:
+  - bionic (18.04)
+  - focal (20.04)
+  - jammy (22.04)
+```
+
+### NGINX Amplify Agent
+
+```yaml
+Amazon Linux 2:
+  - any
+Debian:
+  - buster (10)
+  - bullseye (11)
+Red Hat:
+  - 8
+Ubuntu:
+  - bionic
+  - focal
+```
+
+**Note:** You can also use this role to compile NGINX Open Source from source, install NGINX Open Source on compatible yet unsupported platforms, or install NGINX Open Source on BSD systems at your own risk.
 
 ## Role Variables
 
-The variables that can be passed to this role and a brief description about
-them are as follows. (For all variables, take a look at [defaults/main.yml](defaults/main.yml))
+This role has multiple variables. The descriptions and defaults for all these variables can be found in the **[`defaults/main/`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/)** folder in the following files:
 
-```yaml
-# The user to run nginx
-nginx_user: "www-data"
+| Name | Description |
+| ---- | ----------- |
+| **[`main.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/main.yml)** | NGINX installation variables |
+| **[`amplify.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/amplify.yml)** | NGINX Amplify agent installation variables |
+| **[`bsd.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/bsd.yml)** | BSD installation variables |
+| **[`logrotate.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/logrotate.yml)** | Logrotate configuration variables |
+| **[`selinux.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/selinux.yml)** | SELinux configuration variables |
+| **[`systemd.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/defaults/main/systemd.yml)** | Systemd configuration variables |
 
-# A list of directives for the events section.
-nginx_events_params:
- - worker_connections 512
- - debug_connection 127.0.0.1
- - use epoll
- - multi_accept on
+Similarly, descriptions and defaults for preset variables can be found in the **[`vars/`](https://github.com/nginxinc/ansible-role-nginx/blob/main/vars/)** folder in the following files:
 
-# A list of hashes that define the servers for nginx,
-# as with http parameters. Any valid server parameters
-# can be defined here.
-nginx_sites:
- default:
-     - listen 80
-     - server_name _
-     - root "/usr/share/nginx/html"
-     - index index.html
- foo:
-     - listen 8080
-     - server_name localhost
-     - root "/tmp/site1"
-     - location / { try_files $uri $uri/ /index.html; }
-     - location /images/ { try_files $uri $uri/ /index.html; }
- bar:
-     - listen 9090
-     - server_name ansible
-     - root "/tmp/site2"
-     - location / { try_files $uri $uri/ /index.html; }
-     - location /images/ {
-         try_files $uri $uri/ /index.html;
-         allow 127.0.0.1;
-         deny all;
-       }
+| Name | Description |
+| ---- | ----------- |
+| **[`main.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/vars/main.yml)** | List of supported NGINX platforms, modules, and Linux installation variables |
 
-# A list of hashes that define additional configuration
-nginx_configs:
-  proxy:
-      - proxy_set_header X-Real-IP  $remote_addr
-      - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
-  upstream:
-      - upstream foo { server 127.0.0.1:8080 weight=10; }
-  geo:
-      - geo $local {
-          default 0;
-          127.0.0.1 1;
-        }
-  gzip:
-      - gzip on
-      - gzip_disable msie6
+## Example Playbooks
 
-# A list of hashes that define configuration snippets
-nginx_snippets:
-  error_pages:
-    - error_page 500 /http_errors/500.html
-    - error_page 502 /http_errors/502.html
-    - error_page 503 /http_errors/503.html
-    - error_page 504 /http_errors/504.html
+Working functional playbook examples can be found in the **[`molecule/`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/)** folder in the following files:
 
-# A list of hashes that define user/password files
-nginx_auth_basic_files:
-   demo:
-     - foo:$apr1$mEJqnFmy$zioG2q1iDWvRxbHuNepIh0 # foo:demo , generated by : htpasswd -nb foo demo
-     - bar:$apr1$H2GihkSo$PwBeV8cVWFFQlnAJtvVCQ. # bar:demo , generated by : htpasswd -nb bar demo
+| Name | Description |
+| ---- | ----------- |
+| **[`default/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/default/converge.yml)** | Install a specific version of NGINX and set up logrotate |
+| **[`downgrade/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/downgrade/converge.yml)** | Downgrade to a specific version of NGINX |
+| **[`downgrade_plus/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/downgrade_plus/converge.yml)** | Downgrade to a specific version of NGINX Plus |
+| **[`module/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/module/converge.yml)** | Install various NGINX supported modules |
+| **[`plus/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/plus/converge.yml)** | Install NGINX Plus and various NGINX Plus supported modules |
+| **[`source/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/source/converge.yml)** | Install NGINX from source |
+| **[`uninstall/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/uninstall/converge.yml)** | Uninstall NGINX |
+| **[`uninstall_plus/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/uninstall_plus/converge.yml)** | Uninstall NGINX Plus |
+| **[`upgrade/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/upgrade/converge.yml)** | Upgrade NGINX |
+| **[`upgrade_plus/converge.yml`](https://github.com/nginxinc/ansible-role-nginx/blob/main/molecule/upgrade_plus/converge.yml)** | Upgrade NGINX Plus |
 
-# Enable Real IP for CloudFlare requests
-nginx_set_real_ip_from_cloudflare: True
+Do note that if you install this repository via Ansible Galaxy, you will have to replace the role variable in the sample playbooks from `ansible-role-nginx` to `nginxinc.nginx`.
 
-# Enable Nginx Amplify
-nginx_amplify: true
-nginx_amplify_api_key: "your_api_key_goes_here"
-nginx_amplify_update_agent: true
+## Other NGINX Ansible Collections and Roles
 
-# Define modules to enable in configuration
-#
-# Nginx installed via EPEL and APT repos will also install some modules automatically.
-# For official Nginx repo use you will need to install module packages manually.
-#
-# When using with EPEL and APT repos, specify this section as a list of configuration
-# file names, minus the .conf file name extension.
+You can find the Ansible NGINX Core collection of roles to install and configure NGINX Open Source, NGINX Plus, and NGINX App Protect [here](https://github.com/nginxinc/ansible-collection-nginx).
 
-# When using the official Nginx repo, specify this section as list of module file
-# names, minus the .so file name extension.
-#
-# Available module config files in EPEL and APT repos:
-# (APT actually has several more, see https://wiki.debian.org/Nginx/)
-# - mod-http-geoip
-# - mod-http-image-filter
-# - mod-http-perl
-# - mod-http-xslt-filter
-# - mod-mail
-# - mod-stream
-#
-# Available module filenames in Official NGINX repo:
-# - ngx_http_geoip_module
-# - ngx_http_image_filter_module
-# - ngx_http_perl_module
-# - ngx_http_xslt_filter_module
-# - ngx_http_js_module
-#
-# Custom compiled modules are ok too if the .so file exists in same location as a packaged module would be:
-# - ngx_http_modsecurity_module
-#
-nginx_module_configs:
-  - mod-http-geoip
-```
+You can find the Ansible NGINX configuration role to configure NGINX [here](https://github.com/nginxinc/ansible-role-nginx-config).
 
-# Examples
+You can find the Ansible NGINX App Protect role to install and configure NGINX App Protect WAF and NGINX App Protect DoS [here](https://github.com/nginxinc/ansible-role-nginx-app-protect).
 
-## 1) Install nginx with HTTP directives of choice, but with no sites configured and no additional configuration:
-
-```yaml
-- hosts: all
-  roles:
-  - {role: nginx,
-     nginx_http_params: ["sendfile on", "access_log /var/log/nginx/access.log"]
-                          }
-```
-
-## 2) Install nginx with different HTTP directives than in the previous example, but no
-sites configured and no additional configuration.
-
-```yaml
-- hosts: all
-  roles:
-  - {role: nginx,
-     nginx_http_params: ["tcp_nodelay on", "error_log /var/log/nginx/error.log"]}
-```
-
-Note: Please make sure the HTTP directives passed are valid, as this role
-won't check for the validity of the directives. See the nginx documentation
-for details.
-
-## 3) Install nginx and add a site to the configuration.
-
-```yaml
-- hosts: all
-
-  roles:
-  - role: nginx
-    nginx_http_params:
-      - sendfile "on"
-      - access_log "/var/log/nginx/access.log"
-    nginx_sites:
-      bar:
-        - listen 8080
-        - location / { try_files $uri $uri/ /index.html; }
-        - location /images/ { try_files $uri $uri/ /index.html; }
-    nginx_configs:
-      proxy:
-        - proxy_set_header X-Real-IP  $remote_addr
-        - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
-```
-
-## 4) Install nginx and add extra variables to default config
-
-```yaml
--hosts: all
-  vars:
-    - my_extra_params:
-      - client_max_body_size 200M
-# retain defaults and add additional `client_max_body_size` param
-  roles:
-    - role: sorrowless.nginx
-      nginx_http_params: "{{ nginx_http_default_params + my_extra_params }}"
-```
-
-Note: Each site added is represented by a list of hashes, and the configurations
-generated are populated in /etc/nginx/site-available/ and linked from /etc/nginx/site-enable/ to /etc/nginx/site-available.
-
-The file name for the specific site configuration is specified in the hash
-with the key "file_name", any valid server directives can be added to the hash.
-Additional configurations are created in /etc/nginx/conf.d/
-
-## 5) Install Nginx, add 2 sites (different method) and add additional configuration
-
-```yaml
----
-- hosts: all
-  roles:
-    - role: nginx
-      nginx_http_params:
-        - sendfile on
-        - access_log /var/log/nginx/access.log
-      nginx_sites:
-         foo:
-           - listen 8080
-           - server_name localhost
-           - root /tmp/site1
-           - location / { try_files $uri $uri/ /index.html; }
-           - location /images/ { try_files $uri $uri/ /index.html; }
-         bar:
-           - listen 9090
-           - server_name ansible
-           - root /tmp/site2
-           - location / { try_files $uri $uri/ /index.html; }
-           - location /images/ { try_files $uri $uri/ /index.html; }
-      nginx_configs:
-         proxy:
-            - proxy_set_header X-Real-IP  $remote_addr
-            - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
-```
-
-## 6) Install Nginx, add 2 sites, add additional configuration and an upstream configuration block
-
-```yaml
----
-- hosts: all
-  roles:
-    - role: nginx
-      nginx_error_log_level: info
-      nginx_http_params:
-        - sendfile on
-        - access_log /var/log/nginx/access.log
-      nginx_sites:
-        foo:
-           - listen 8080
-           - server_name localhost
-           - root /tmp/site1
-           - location / { try_files $uri $uri/ /index.html; }
-           - location /images/ { try_files $uri $uri/ /index.html; }
-        bar:
-           - listen 9090
-           - server_name ansible
-           - root /tmp/site2
-           - if ( $host = example.com ) { rewrite ^(.*)$ http://www.example.com$1 permanent; }
-           - location / {
-             try_files $uri $uri/ /index.html;
-             auth_basic            "Restricted";
-             auth_basic_user_file  auth_basic/demo;
-           }
-           - location /images/ { try_files $uri $uri/ /index.html; }
-      nginx_configs:
-        proxy:
-            - proxy_set_header X-Real-IP  $remote_addr
-            - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for
-        upstream:
-            # Results in:
-            # upstream foo_backend {
-            #   server 127.0.0.1:8080 weight=10;
-            # }
-            - upstream foo_backend { server 127.0.0.1:8080 weight=10; }
-      nginx_auth_basic_files:
-        demo:
-           - foo:$apr1$mEJqnFmy$zioG2q1iDWvRxbHuNepIh0 # foo:demo , generated by : htpasswd -nb foo demo
-           - bar:$apr1$H2GihkSo$PwBeV8cVWFFQlnAJtvVCQ. # bar:demo , generated by : htpasswd -nb bar demo
-```
-
-## 7) Install Nginx, add a site and use special yaml syntax to make the location blocks multiline for clarity
-
-```yaml
----
-- hosts: all
-  roles:
-    - role: nginx
-      nginx_http_params:
-        - sendfile on
-        - access_log /var/log/nginx/access.log
-      nginx_sites:
-        foo:
-           - listen 443 ssl
-           - server_name foo.example.com
-           - set $myhost foo.example.com
-           - |
-             location / {
-               proxy_set_header Host foo.example.com;
-             }
-           - |
-             location ~ /v2/users/.+?/organizations {
-               if ($request_method = PUT) {
-                 set $myhost bar.example.com;
-               }
-               if ($request_method = DELETE) {
-                 set $myhost bar.example.com;
-               }
-               proxy_set_header Host $myhost;
-             }
-```
-## 8) Example to use this role with my ssl-certs role to generate or copy ssl certificate ( https://galaxy.ansible.com/sorrowless/ssl-certs )
-```yaml
- - hosts: all
-   roles:
-     - jdauphant.ssl-certs
-     - role: sorrowless.nginx
-       nginx_configs:
-          ssl:
-               - ssl_certificate_key {{ssl_certs_privkey_path}}
-               - ssl_certificate     {{ssl_certs_cert_path}}
-       nginx_sites:
-          default:
-               - listen 443 ssl
-               - server_name _
-               - root "/usr/share/nginx/html"
-               - index index.html
-```
-## 9) Site configuration using a custom template.
-Instead of defining a site config file using a list of attributes,
-you may use a hash/dictionary that includes the filename of an alternate template.
-Additional values are accessible within the template via the `item.value` variable.
-```yaml
-- hosts: all
-
-  roles:
-  - role: nginx
-    nginx_sites:
-      custom_bar:
-        template: custom_bar.conf.j2
-        server_name: custom_bar.example.com
-```
-Custom template: custom_bar.conf.j2:
-```handlebars
-# {{ ansible_managed }}
-upstream backend {
-  server 10.0.0.101;
-}
-server {
-  server_name {{ item.value.server_name }};
-  location / {
-    proxy_pass http://backend;
-  }
-}
-```
-Using a custom template allows for unlimited flexibility in configuring the site config file.
-This example demonstrates the common practice of configuring a site server block
-in the same file as its complementary upstream block.
-If you use this option:
-* _The hash **must** include a `template:` value, or the configuration task will fail._
-* _This role cannot check tha validity of your custom template.
-If you use this method, the conf file formatting provided by this role is unavailable,
-and it is up to you to provide a template with valid content and formatting for NGINX._
-
-## 10) Install Nginx, add 2 sites, use snippets to configure access controls
-```yaml
----
-- hosts: all
-  roles:
-    - role: nginx
-      nginx_http_params:
-        - sendfile on
-        - access_log /var/log/nginx/access.log
-      nginx_snippets:
-        accesslist_devel:
-          - allow 192.168.0.0/24
-          - deny all
-      nginx_sites:
-        foo:
-           - listen 8080
-           - server_name localhost
-           - root /tmp/site1
-           - include snippets/accesslist_devel.conf
-           - location / { try_files $uri $uri/ /index.html; }
-           - location /images/ { try_files $uri $uri/ /index.html; }
-        bar:
-           - listen 9090
-           - server_name ansible
-           - root /tmp/site2
-           - location / { try_files $uri $uri/ /index.html; }
-           - location /images/ { try_files $uri $uri/ /index.html; }
-```
-
-## Dependencies
-
-None
+You can find the Ansible NGINX Unit role to install NGINX Unit [here](https://github.com/nginxinc/ansible-role-nginx-unit).
 
 ## License
 
-BSD
+[Apache License, Version 2.0](https://github.com/nginxinc/ansible-role-nginx/blob/main/LICENSE)
 
 ## Author Information
 
-- Original : Benno Joy
-- Modified by : DAUPHANT Julien
-- Reworked by : [Stan Bogatkin](https://sbog.ru)
+[Alessandro Fael Garcia](https://github.com/alessfg)
+
+[Grzegorz Dzien](https://github.com/gdzien)
+
+[Tom Gamull](https://github.com/magicalyak)
+
+&copy; [F5 Networks, Inc.](https://www.f5.com/) 2018 - 2022

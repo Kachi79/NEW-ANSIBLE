@@ -1,45 +1,40 @@
 ---
 - name: Converge
   hosts: all
-  become: true
-
-  vars:
-    nginx_sites:
-      "host_http":
-        - listen 80
-        - server_name _
-        - gzip on
-        - gzip_types *
-        - charset utf-8
-        - client_max_body_size 32M
-        - keepalive_timeout 5
-        - ssl on
-        - ssl_certificate /etc/ssl_certs/{{ nginx_mainsite }}/fullchain.pem
-        - ssl_certificate_key /etc/ssl_certs/{{ nginx_mainsite }}/private.pem
-        - ssl_dhparam /etc/ssl_certs/dhparam.pem
-        - client_max_body_size 15m
-        - add_header Strict-Transport-Security "max-age=31536000; includeSubDomains"
-        - keepalive_timeout 0
-        - proxy_read_timeout 5s
-        - proxy_send_timeout 5s
-        - resolver_timeout 5s
-        - client_body_buffer_size 100k
-
   pre_tasks:
-    - name: Update apt cache.
-      apt: update_cache=true cache_valid_time=600
-      changed_when: false
-      when: ansible_os_family == 'Debian'
-
-    - name: Install curl package
-      package:
-        name: curl
-        state: present
-
-  roles:
-    - role: nginx
-
-  post_tasks:
-    - name: Verify nginx is running.
-      command: "curl localhost"
-      changed_when: false
+    - name: Set repo if Alpine
+      ansible.builtin.set_fact:
+        version: =1.21.6-r1
+      when: ansible_facts['os_family'] == "Alpine"
+    - name: Set repo if Debian
+      ansible.builtin.set_fact:
+        version: =1.21.6-1~{{ ansible_facts['distribution_release'] }}
+      when: ansible_facts['os_family'] == "Debian"
+    - name: Set repo if Red Hat
+      ansible.builtin.set_fact:
+        version: -1.21.6-1.{{ (ansible_facts['distribution'] == "Amazon") | ternary('amzn2', ('el' + ansible_facts['distribution_major_version'] | string)) }}.ngx
+      when: ansible_facts['os_family'] == "RedHat"
+    - name: Set repo if SLES
+      ansible.builtin.set_fact:
+        version: =1.21.6-1.sles{{ ansible_facts['distribution_major_version'] }}.ngx
+      when: ansible_facts['os_family'] == "Suse"
+  tasks:
+    - name: Install NGINX
+      ansible.builtin.include_role:
+        name: ansible-role-nginx
+      vars:
+        nginx_version: "{{ version }}"
+        nginx_service_modify: true
+        nginx_service_timeout: 95
+        nginx_logrotate_conf_enable: true
+        nginx_logrotate_conf:
+          paths:
+            - /var/log/nginx/*.log
+          options:
+            - daily
+            - missingok
+            - rotate 14
+            - compress
+            - delaycompress
+            - notifempty
+            - sharedscripts
