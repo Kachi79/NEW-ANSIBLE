@@ -1,55 +1,45 @@
 ---
+dependencies: []
+
 galaxy_info:
-  author: nginxinc
-  description: Official Ansible role for NGINX
   role_name: nginx
-  company: F5, Inc.
-
-  license: Apache License, Version 2.0
-
-  min_ansible_version: "2.12"
-
+  author: geerlingguy
+  description: Nginx installation for Linux, FreeBSD and OpenBSD.
+  company: "Midwestern Mac, LLC"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.4
   platforms:
-    - name: Alpine
-      versions:
-        - all
-    - name: Amazon Linux 2
-      versions:
-        - all
-    - name: Debian
-      versions:
-        - buster
-        - bullseye
     - name: EL
       versions:
-        - "7"
-        - "8"
-        - "9"
-    - name: FreeBSD
+        - 7
+        - 8
+    - name: Debian
       versions:
-        - "12.1"
+        - all
     - name: Ubuntu
       versions:
-        - bionic
+        - trusty
+        - xenial
         - focal
-        - impish
-        - jammy
-    - name: SLES
+    - name: Archlinux
       versions:
-        - "12"
-        - "15"
-
+        - all
+    - name: FreeBSD
+      versions:
+        - 10.3
+        - 10.2
+        - 10.1
+        - 10.0
+        - 9.3
+    - name: OpenBSD
+      versions:
+        - 5.9
+        - 6.0
   galaxy_tags:
-    - nginx
-    - oss
-    - opensource
-    - plus
-    - web
-    - server
     - development
-    - install
-
-collections:
-  - ansible.posix
-  - community.crypto
-  - community.general
+    - web
+    - nginx
+    - reverse
+    - proxy
+    - load
+    - balancer
