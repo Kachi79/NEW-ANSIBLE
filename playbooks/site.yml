@@ -1,4 +1,9 @@
 ---
-- hosts: nginx
-- name: install nginx
-  import_playbook: ../static-assignments/nginx.yml
+# - hosts: nginx
+# - name: install nginx
+#   import_playbook: ../static-assignments/nginx.yml
+
+
+- hosts: db
+- name: install mysql
+  import_playbook: ../static-assignments/mysql.yml
