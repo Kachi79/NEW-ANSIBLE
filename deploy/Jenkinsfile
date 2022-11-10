@@ -30,7 +30,7 @@ pipeline {
        }
     stage('Run new Ansible playbook') {
        steps {
-        ansiblePlaybook colorized: true, credentialsId: 'ssh-jenkins-server', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${inventory}', playbook: 'playbooks/site.yml'   
+        ansiblePlaybook become: true, colorized: true, credentialsId: 'ssh-jenkins-server', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
          }
        }
     stage('Clean workspace after build'){
