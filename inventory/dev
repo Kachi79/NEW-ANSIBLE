@@ -2,4 +2,4 @@
 172.31.81.254 ansible_ssh_user='ec2-user'
 
 [db]
-172.31.95.133 ansible_ssh_user='ec2-user'
+172.31.31.210 ansible_ssh_user='ec2-user'
