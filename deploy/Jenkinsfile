@@ -19,7 +19,7 @@ pipeline {
     }
     stage('Checkout SCM') {
        steps {
-            git branch: 'morestages', url: 'https://github.com/Kachi79/NEW-ANSIBLE.git'
+            git branch: 'main', url: 'https://github.com/Kachi79/NEW-ANSIBLE.git'
          }
        }
     stage('prepare Ansible for Execution') {
