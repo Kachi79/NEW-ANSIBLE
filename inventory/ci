@@ -1,0 +1,11 @@
+[jenkins]
+<Jenkins-Private-IP-Address>
+
+[nginx]
+<Nginx-Private-IP-Address>
+
+[sonarqube]
+<SonarQube-Private-IP-Address>
+
+[artifactory]
+172.31.30.98 ansible_ssh_user='ec2-user'
