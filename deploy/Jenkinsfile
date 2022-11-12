@@ -19,7 +19,7 @@ pipeline {
     }
     stage('Checkout SCM') {
        steps {
-            git branch: 'morestages', url: 'https://github.com/Kachi79/NEW-ANSIBLE.git'
+            git branch: 'main', url: 'https://github.com/Kachi79/NEW-ANSIBLE.git'
          }
        }
     stage('prepare Ansible for Execution') {
@@ -30,7 +30,7 @@ pipeline {
        }
     stage('Run new Ansible playbook') {
        steps {
-        ansiblePlaybook become: true, colorized: true, credentialsId: 'ssh-jenkins-server', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/dev', playbook: 'playbooks/site.yml'
+        ansiblePlaybook become: true, colorized: true, credentialsId: 'ssh-jenkins-server', disableHostKeyChecking: true, installation: 'ansible', inventory: 'inventory/${inventory}', playbook: 'playbooks/site.yml'
          }
        }
     stage('Clean workspace after build'){

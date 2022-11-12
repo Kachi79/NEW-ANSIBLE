@@ -5,18 +5,18 @@
 
 
 # - hosts: db
-# - name: mysql assignment
-#   ansible.builtin.import_playbook: ../static-assignments/mysql.yml
+# - name: database assignment
+#   ansible.builtin.import_playbook: ../static-assignments/database.yml
 
 
-- hosts: artifactory 
-- name: artifactory assignment
-  ansible.builtin.import_playbook: ../static-assignments/artifactory.yml
+# - hosts: artifactory 
+# - name: artifactory assignment
+#   ansible.builtin.import_playbook: ../static-assignments/artifactory.yml
 
 # - hosts: sonar
 # - name: sonar assignment
 #   ansible.builtin.import_playbook: ../static-assignments/sonar.yml
 
-# - hosts: todo 
-# - name: Deploy the todo application
-#   ansible.builtin.import_playbook: ../static-assignments/deployment.yml
+- hosts: todo 
+- name: Deploy the todo application
+  ansible.builtin.import_playbook: ../static-assignments/deployment.yml
