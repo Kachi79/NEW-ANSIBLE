@@ -50,7 +50,7 @@
 
     - name: Download the artifact
       get_url:
-        url: http://34.203.9.76:8082/artifactory/PBL/
+        url: http://54.196.210.209:8082/artifactory/PBL/
         dest: /home/ec2-user/
         url_username: admin
         url_password: AP9b2M3GWGovAKdtJLDVaP4NgEm
