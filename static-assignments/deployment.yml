@@ -4,13 +4,13 @@
   hosts: todo
 
   tasks:
-    - name: install remi and rhel repo
-      ansible.builtin.yum:
-        name: 
-          - https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-          - dnf-utils
-          - http://rpms.remirepo.net/enterprise/remi-release-8.rpm
-        disable_gpg_check: yes
+    # - name: install remi and rhel repo
+      # ansible.builtin.yum:
+      #   name: 
+      #     - https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+      #     - dnf-utils
+      #     - http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+      #   disable_gpg_check: yes
 
     
     - name: install httpd on the webserver
@@ -48,9 +48,9 @@
         state: started 
         enabled: yes
 
-    - name: Download the artifact
+    - name: Download the artifacts
       get_url:
-        url: http://54.196.210.209:8082/artifactory/PBL/
+        url: http://3.87.125.86:8082/artifactory/PBL/
         dest: /home/ec2-user/
         url_username: admin
         url_password: AP9b2M3GWGovAKdtJLDVaP4NgEm
