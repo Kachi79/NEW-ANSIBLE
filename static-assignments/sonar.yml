@@ -1,5 +1,0 @@
----
-- hosts: sonar
-  become: yes
-  roles:
-    - sonar
