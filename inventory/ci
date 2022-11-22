@@ -5,7 +5,7 @@
 <Nginx-Private-IP-Address>
 
 [sonar]
-172.31.27.192 ansible_ssh_user='ubuntu'
+172.31.28.187 ansible_ssh_user='ubuntu'
 
 [artifactory]
 172.31.30.98 ansible_ssh_user='ec2-user'
